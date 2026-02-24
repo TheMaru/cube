@@ -1,9 +1,6 @@
-#include <stdint.h>
-
-typedef struct {
-  int x;
-  int y;
-} Point2D;
+# include "render.h"
+# include <stdint.h>
+# include <stdlib.h>
 
 void render(uint32_t* displayBuffer, int width, int height) {
   int scale = 200;
@@ -31,5 +28,27 @@ void render(uint32_t* displayBuffer, int width, int height) {
   // draw points
   for (int i = 0; i < 4; i++) {
     displayBuffer[points[i].y * width + points[i].x] = green;
+  }
+
+  draw_line(displayBuffer, width, points[0], points[1]);
+  draw_line(displayBuffer, width, points[1], points[2]);
+  draw_line(displayBuffer, width, points[2], points[3]);
+  draw_line(displayBuffer, width, points[3], points[0]);
+}
+
+void draw_line(uint32_t* displayBuffer, int width, Point2D p1, Point2D p2) {
+  // calculate step count
+  int dx, dy, steps;
+  dx = abs(p2.x - p1.x);
+  dy = abs(p2.y - p1.y);
+  steps = (dx > dy) ? dx : dy;
+
+  uint32_t sideColor = (255 << 24) | 126 << 16 | 126 << 8;
+
+  for (int i = 0; i <= steps; i++) {
+    float t = (float)i / steps;
+    int x = p1.x + (int)(t * (p2.x - p1.x));
+    int y = p1.y + (int)(t * (p2.y - p1.y));
+    displayBuffer[y * width + x] = sideColor;
   }
 }
