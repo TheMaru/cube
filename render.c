@@ -1,22 +1,35 @@
 #include <stdint.h>
 
+typedef struct {
+  int x;
+  int y;
+} Point2D;
+
 void render(uint32_t* displayBuffer, int width, int height) {
-  int w, h;
-  uint8_t b, a;
-  uint32_t color;
+  int scale = 200;
+  int centerX = width / 2;
+  int centerY = height / 2;
 
-  b = 0, a = 255;
+  // define points
+  Point2D points[8];
+  points[0].x = centerX + (-1 * scale);
+  points[0].y = centerY - (1 * scale);
+  points[1].x = centerX + (1 * scale);
+  points[1].y = centerY - (1 * scale);
+  points[2].x = centerX + (1 * scale);
+  points[2].y = centerY - (-1 * scale);
+  points[3].x = centerX + (-1 * scale);
+  points[3].y = centerY - (-1 * scale);
 
-  for (h = 0; h < height; h++) {
-    for (w = 0; w < width; w++) {
-      uint8_t r = (w * 255) / width;
-      uint8_t g = (h * 255) / height;
-      // color = a << 24;
-      // color = color | r << 16;
-      // color = color | g << 8;
-      // color = color | b;
-      color = (a << 24) | (r << 16) | (g << 8) | b;
-      displayBuffer[(h * width) + w] = color;
-    }
+  // green
+  uint32_t green;
+  green = 255 << 24;
+  green = green | 0 << 16;
+  green = green | 255 << 8;
+  green = green | 0;
+
+  // draw points
+  for (int i = 0; i < 4; i++) {
+    displayBuffer[points[i].y * width + points[i].x] = green;
   }
 }
