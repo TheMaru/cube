@@ -2,39 +2,16 @@
 # include <stdint.h>
 # include <stdlib.h>
 
-void render(uint32_t* displayBuffer, int width, int height) {
-  int scale = 200;
-  int centerX = width / 2;
-  int centerY = height / 2;
+typedef struct {
+  float x;
+  float y;
+  float z;
+} Point3D;
 
-  // define points
-  Point2D points[8];
-  points[0].x = centerX + (-1 * scale);
-  points[0].y = centerY - (1 * scale);
-  points[1].x = centerX + (1 * scale);
-  points[1].y = centerY - (1 * scale);
-  points[2].x = centerX + (1 * scale);
-  points[2].y = centerY - (-1 * scale);
-  points[3].x = centerX + (-1 * scale);
-  points[3].y = centerY - (-1 * scale);
-
-  // green
-  uint32_t green;
-  green = 255 << 24;
-  green = green | 0 << 16;
-  green = green | 255 << 8;
-  green = green | 0;
-
-  // draw points
-  for (int i = 0; i < 4; i++) {
-    displayBuffer[points[i].y * width + points[i].x] = green;
-  }
-
-  draw_line(displayBuffer, width, points[0], points[1]);
-  draw_line(displayBuffer, width, points[1], points[2]);
-  draw_line(displayBuffer, width, points[2], points[3]);
-  draw_line(displayBuffer, width, points[3], points[0]);
-}
+typedef struct {
+  int x;
+  int y;
+} Point2D;
 
 void draw_line(uint32_t* displayBuffer, int width, Point2D p1, Point2D p2) {
   // calculate step count
@@ -43,7 +20,7 @@ void draw_line(uint32_t* displayBuffer, int width, Point2D p1, Point2D p2) {
   dy = abs(p2.y - p1.y);
   steps = (dx > dy) ? dx : dy;
 
-  uint32_t sideColor = (255 << 24) | 126 << 16 | 126 << 8;
+  uint32_t sideColor = (255 << 24) | (255 << 8);
 
   for (int i = 0; i <= steps; i++) {
     float t = (float)i / steps;
@@ -52,3 +29,52 @@ void draw_line(uint32_t* displayBuffer, int width, Point2D p1, Point2D p2) {
     displayBuffer[y * width + x] = sideColor;
   }
 }
+
+void render(uint32_t* displayBuffer, int width, int height) {
+  int scale = 200;
+  int centerX = width / 2;
+  int centerY = height / 2;
+
+  // define vertices in 3 axis
+  Point3D cubeVertices[8] = {
+    {-1, 1, 1},
+    {1, 1, 1},
+    {1, -1, 1},
+    {-1, -1, 1},
+    {-1, 1, -1},
+    {1, 1, -1},
+    {1, -1, -1},
+    {-1, -1, -1},
+  };
+
+  // project to 2 axis
+  Point2D projectedCubeVertices[8];
+  for (int i = 0; i < 8; i++) {
+    projectedCubeVertices[i].x = centerX + (int)(cubeVertices[i].x * scale);
+    projectedCubeVertices[i].y = centerY - (int)(cubeVertices[i].y * scale);
+  }
+
+  // green
+  uint32_t pointColor = (255 << 24) | (126 << 16) | (126 << 8);
+
+  // draw vertices
+  for (int i = 0; i < 4; i++) {
+    displayBuffer[projectedCubeVertices[i].y * width + projectedCubeVertices[i].x] = pointColor;
+  }
+
+  draw_line(displayBuffer, width, projectedCubeVertices[0], projectedCubeVertices[1]);
+  draw_line(displayBuffer, width, projectedCubeVertices[1], projectedCubeVertices[2]);
+  draw_line(displayBuffer, width, projectedCubeVertices[2], projectedCubeVertices[3]);
+  draw_line(displayBuffer, width, projectedCubeVertices[3], projectedCubeVertices[0]);
+
+  draw_line(displayBuffer, width, projectedCubeVertices[4], projectedCubeVertices[5]);
+  draw_line(displayBuffer, width, projectedCubeVertices[5], projectedCubeVertices[6]);
+  draw_line(displayBuffer, width, projectedCubeVertices[6], projectedCubeVertices[7]);
+  draw_line(displayBuffer, width, projectedCubeVertices[7], projectedCubeVertices[4]);
+
+  draw_line(displayBuffer, width, projectedCubeVertices[0], projectedCubeVertices[4]);
+  draw_line(displayBuffer, width, projectedCubeVertices[1], projectedCubeVertices[5]);
+  draw_line(displayBuffer, width, projectedCubeVertices[2], projectedCubeVertices[6]);
+  draw_line(displayBuffer, width, projectedCubeVertices[3], projectedCubeVertices[7]);
+}
+
