@@ -1,6 +1,7 @@
 # include "render.h"
 # include <stdint.h>
 # include <stdlib.h>
+# include <math.h>
 
 typedef struct {
   float x;
@@ -47,11 +48,38 @@ void render(uint32_t* displayBuffer, int width, int height) {
     {-1, -1, -1},
   };
 
+  // rotate 30° on y axis
+  double angleY = 0.524;
+  double cosY = cos(angleY);
+  double sinY = sin(angleY);
+  Point3D rotatedY[8];
+  for (int i = 0; i < 8; i++) {
+    float x = cubeVertices[i].x;
+    float y = cubeVertices[i].y;
+    float z = cubeVertices[i].z;
+    rotatedY[i].x = x * cosY - z * sinY;
+    rotatedY[i].y = y;
+    rotatedY[i].z = x * sinY + z * cosY;
+  }
+
+  double angleX = 0.349;
+  double cosX = cos(angleX);
+  double sinX = sin(angleX);
+  Point3D rotatedYX[8];
+  for (int i = 0; i < 8; i++) {
+    float x = rotatedY[i].x;
+    float y = rotatedY[i].y;
+    float z = rotatedY[i].z;
+    rotatedYX[i].x = x;
+    rotatedYX[i].y = y * cosX - z * sinX;
+    rotatedYX[i].z = y * sinX + z * cosX;
+  }
+
   // project to 2 axis
   Point2D projectedCubeVertices[8];
   for (int i = 0; i < 8; i++) {
-    projectedCubeVertices[i].x = centerX + (int)(cubeVertices[i].x * scale);
-    projectedCubeVertices[i].y = centerY - (int)(cubeVertices[i].y * scale);
+    projectedCubeVertices[i].x = centerX + (int)(rotatedYX[i].x * scale);
+    projectedCubeVertices[i].y = centerY - (int)(rotatedYX[i].y * scale);
   }
 
   // green
