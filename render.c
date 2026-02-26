@@ -31,7 +31,7 @@ void draw_line(uint32_t* displayBuffer, int width, Point2D p1, Point2D p2) {
   }
 }
 
-void render(uint32_t* displayBuffer, int width, int height) {
+void render(uint32_t* displayBuffer, int width, int height, double angle) {
   int scale = 200;
   int centerX = width / 2;
   int centerY = height / 2;
@@ -49,7 +49,7 @@ void render(uint32_t* displayBuffer, int width, int height) {
   };
 
   // rotate 30° on y axis
-  double angleY = 0.524;
+  double angleY = 0.524 + angle;
   double cosY = cos(angleY);
   double sinY = sin(angleY);
   Point3D rotatedY[8];

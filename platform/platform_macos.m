@@ -1,5 +1,6 @@
-#include "platform.h"                                                                                                                                                             
+#include "platform.h"
 #import <Cocoa/Cocoa.h>
+#include <time.h>
 
 static uint32_t *buffer = NULL;
 static int buf_width = 0;
@@ -13,84 +14,84 @@ static int should_close = 0;
 
 @implementation AppDelegate
 - (void)windowWillClose:(NSNotification *)notification {
-    should_close = 1;
+  should_close = 1;
 }
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
-    return YES;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:
+    (NSApplication *)sender {
+  return YES;
 }
 @end
 
 int platform_create_window(int width, int height) {
-    buf_width = width;
-    buf_height = height;
+  buf_width = width;
+  buf_height = height;
 
-    buffer = malloc(sizeof(uint32_t) * width * height);
-    if (!buffer) return 1;
+  buffer = malloc(sizeof(uint32_t) * width * height);
+  if (!buffer)
+    return 1;
 
-    [NSApplication sharedApplication];
-    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+  [NSApplication sharedApplication];
+  [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
-    AppDelegate *appDelegate = [[AppDelegate alloc] init];
-    [NSApp setDelegate:appDelegate];
+  AppDelegate *appDelegate = [[AppDelegate alloc] init];
+  [NSApp setDelegate:appDelegate];
 
-    NSRect frame = NSMakeRect(0, 0, width, height);
-    window = [[NSWindow alloc]
-        initWithContentRect:frame
-                  styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable)
-                    backing:NSBackingStoreBuffered
-                      defer:NO];
+  NSRect frame = NSMakeRect(0, 0, width, height);
+  window = [[NSWindow alloc]
+      initWithContentRect:frame
+                styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable)
+                  backing:NSBackingStoreBuffered
+                    defer:NO];
 
-    [window setTitle:@"Cube"];
-    [window setDelegate:appDelegate];
-    [window center];
+  [window setTitle:@"Cube"];
+  [window setDelegate:appDelegate];
+  [window center];
 
-    // NSImageView is the simplest way to display a pixel buffer.
-    // Each frame we'll create an image from our buffer and set it here.
-    imageView = [[NSImageView alloc] initWithFrame:frame];
-    [window setContentView:imageView];
+  // NSImageView is the simplest way to display a pixel buffer.
+  // Each frame we'll create an image from our buffer and set it here.
+  imageView = [[NSImageView alloc] initWithFrame:frame];
+  [window setContentView:imageView];
 
-    [window makeKeyAndOrderFront:nil];
-    [NSApp activateIgnoringOtherApps:YES];
-    [NSApp finishLaunching];
+  [window makeKeyAndOrderFront:nil];
+  [NSApp activateIgnoringOtherApps:YES];
+  [NSApp finishLaunching];
 
-    return 0;
+  return 0;
 }
 
-uint32_t* platform_get_buffer(void) {
-    return buffer;
-}
+uint32_t *platform_get_buffer(void) { return buffer; }
 
 void platform_display_buffer(void) {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(
-        buffer,
-        buf_width,
-        buf_height,
-        8,                // bits per component (each R/G/B/A channel)
-        buf_width * 4,    // bytes per row (4 bytes per pixel)
-        colorSpace,
-        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little
-    );
-    CGImageRef cgImage = CGBitmapContextCreateImage(ctx);
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGContextRef ctx = CGBitmapContextCreate(
+      buffer, buf_width, buf_height,
+      8,             // bits per component (each R/G/B/A channel)
+      buf_width * 4, // bytes per row (4 bytes per pixel)
+      colorSpace, kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+  CGImageRef cgImage = CGBitmapContextCreateImage(ctx);
 
-    NSImage *image = [[NSImage alloc]
-        initWithCGImage:cgImage
-                   size:NSMakeSize(buf_width, buf_height)];
-    [imageView setImage:image];
+  NSImage *image =
+      [[NSImage alloc] initWithCGImage:cgImage
+                                  size:NSMakeSize(buf_width, buf_height)];
+  [imageView setImage:image];
 
-    CGImageRelease(cgImage);
-    CGContextRelease(ctx);
-    CGColorSpaceRelease(colorSpace);
+  CGImageRelease(cgImage);
+  CGContextRelease(ctx);
+  CGColorSpaceRelease(colorSpace);
 
-    NSEvent *event;
-    while ((event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                                       untilDate:nil
-                                          inMode:NSDefaultRunLoopMode
-                                         dequeue:YES])) {
-        [NSApp sendEvent:event];
-    }
+  NSEvent *event;
+  while ((event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                     untilDate:nil
+                                        inMode:NSDefaultRunLoopMode
+                                       dequeue:YES])) {
+    [NSApp sendEvent:event];
+  }
 }
 
-int platform_should_close(void) {
-    return should_close;
+int platform_should_close(void) { return should_close; }
+
+long platform_get_time() {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts.tv_sec * 1000000000L + ts.tv_nsec;
 }
