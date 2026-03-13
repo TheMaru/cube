@@ -1,7 +1,9 @@
-# include "render.h"
-# include <stdint.h>
-# include <stdlib.h>
-# include <math.h>
+#include "render.h"
+
+#include <assert.h>
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 typedef struct {
   float x;
@@ -19,17 +21,23 @@ static int width;
 static int height;
 static uint32_t sideColor = (255 << 24) | (255 << 8);
 
+static void paint_pixel(int x, int y, uint32_t color) {
+  assert(x >= 0 && x < width && y >= 0 && y < height);
+
+  displayBuffer[y * width + x] = color;
+}
+
 static void draw_line_low(int x0, int y0, int x1, int y1) {
   int dx = abs(x1 - x0);
   int dy = abs(y1 - y0);
-  int stepY = (y0 < y1) ? 1 : -1; 
+  int stepY = (y0 < y1) ? 1 : -1;
   int error = 2 * dy - dx;
   int y = y0;
 
   for (int x = x0; x <= x1; x++) {
-    displayBuffer[y * width + x] = sideColor;
+    paint_pixel(x, y, sideColor);
     error += 2 * dy;
-    if ( error > dx) {
+    if (error > dx) {
       y += stepY;
       error -= 2 * dx;
     }
@@ -39,14 +47,14 @@ static void draw_line_low(int x0, int y0, int x1, int y1) {
 static void draw_line_high(int x0, int y0, int x1, int y1) {
   int dx = abs(x1 - x0);
   int dy = abs(y1 - y0);
-  int stepX = (x0 < x1) ? 1 : -1; 
+  int stepX = (x0 < x1) ? 1 : -1;
   int error = 2 * dx - dy;
   int x = x0;
 
   for (int y = y0; y <= y1; y++) {
-    displayBuffer[y * width + x] = sideColor;
+    paint_pixel(x, y, sideColor);
     error += 2 * dx;
-    if ( error > dy) {
+    if (error > dy) {
       x += stepX;
       error -= 2 * dy;
     }
@@ -57,7 +65,7 @@ static void draw_line(Point2D p1, Point2D p2) {
   int dx, dy;
   dx = abs(p2.x - p1.x);
   dy = abs(p2.y - p1.y);
-  
+
   if (dy < dx) {
     if (p1.x > p2.x) {
       draw_line_low(p2.x, p2.y, p1.x, p1.y);
@@ -84,14 +92,8 @@ void render(uint32_t* db, int w, int h, double angle) {
 
   // define vertices in 3 axis
   Point3D cubeVertices[8] = {
-    {-1, 1, 1},
-    {1, 1, 1},
-    {1, -1, 1},
-    {-1, -1, 1},
-    {-1, 1, -1},
-    {1, 1, -1},
-    {1, -1, -1},
-    {-1, -1, -1},
+      {-1, 1, 1},  {1, 1, 1},  {1, -1, 1},  {-1, -1, 1},
+      {-1, 1, -1}, {1, 1, -1}, {1, -1, -1}, {-1, -1, -1},
   };
 
   // rotate 30° on y axis
@@ -132,8 +134,9 @@ void render(uint32_t* db, int w, int h, double angle) {
   uint32_t pointColor = (255 << 24) | (126 << 16) | (126 << 8);
 
   // draw vertices
-  for (int i = 0; i < 4; i++) {
-    displayBuffer[projectedCubeVertices[i].y * width + projectedCubeVertices[i].x] = pointColor;
+  for (int i = 0; i < 8; i++) {
+    paint_pixel(projectedCubeVertices[i].x, projectedCubeVertices[i].y,
+                pointColor);
   }
 
   draw_line(projectedCubeVertices[0], projectedCubeVertices[1]);
@@ -151,4 +154,3 @@ void render(uint32_t* db, int w, int h, double angle) {
   draw_line(projectedCubeVertices[2], projectedCubeVertices[6]);
   draw_line(projectedCubeVertices[3], projectedCubeVertices[7]);
 }
-
