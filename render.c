@@ -21,6 +21,17 @@ static int width;
 static int height;
 static uint32_t sideColor = (255 << 24) | (255 << 8);
 
+// define vertices in 3 axis
+static const Point3D cubeVertices[8] = {
+    {-1, 1, 1},  {1, 1, 1},  {1, -1, 1},  {-1, -1, 1},
+    {-1, 1, -1}, {1, 1, -1}, {1, -1, -1}, {-1, -1, -1},
+};
+
+static const int edges[12][2] = {
+    {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6},
+    {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7},
+};
+
 static void paint_pixel(int x, int y, uint32_t color) {
   assert(x >= 0 && x < width && y >= 0 && y < height);
 
@@ -90,12 +101,6 @@ void render(uint32_t* db, int w, int h, double angle) {
   width = w;
   height = h;
 
-  // define vertices in 3 axis
-  Point3D cubeVertices[8] = {
-      {-1, 1, 1},  {1, 1, 1},  {1, -1, 1},  {-1, -1, 1},
-      {-1, 1, -1}, {1, 1, -1}, {1, -1, -1}, {-1, -1, -1},
-  };
-
   // rotate 30° on y axis
   double angleY = 0.524 + angle;
   double cosY = cos(angleY);
@@ -139,18 +144,10 @@ void render(uint32_t* db, int w, int h, double angle) {
                 pointColor);
   }
 
-  draw_line(projectedCubeVertices[0], projectedCubeVertices[1]);
-  draw_line(projectedCubeVertices[1], projectedCubeVertices[2]);
-  draw_line(projectedCubeVertices[2], projectedCubeVertices[3]);
-  draw_line(projectedCubeVertices[3], projectedCubeVertices[0]);
-
-  draw_line(projectedCubeVertices[4], projectedCubeVertices[5]);
-  draw_line(projectedCubeVertices[5], projectedCubeVertices[6]);
-  draw_line(projectedCubeVertices[6], projectedCubeVertices[7]);
-  draw_line(projectedCubeVertices[7], projectedCubeVertices[4]);
-
-  draw_line(projectedCubeVertices[0], projectedCubeVertices[4]);
-  draw_line(projectedCubeVertices[1], projectedCubeVertices[5]);
-  draw_line(projectedCubeVertices[2], projectedCubeVertices[6]);
-  draw_line(projectedCubeVertices[3], projectedCubeVertices[7]);
+  // draw edges
+  for (int i = 0; i < 12; i++) {
+    int from = edges[i][0];
+    int to = edges[i][1];
+    draw_line(projectedCubeVertices[from], projectedCubeVertices[to]);
+  }
 }
